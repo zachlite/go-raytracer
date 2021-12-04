@@ -26,6 +26,14 @@ func Sub(a Vec3, b Vec3) Vec3 {
 	}
 }
 
+func Multiply(a Vec3, b Vec3) Vec3 {
+	return Vec3{
+		X: a.X * b.X,
+		Y: a.Y * b.Y,
+		Z: a.Z * b.Z,
+	}
+}
+
 func MultiplyScalar(v Vec3, s float64) Vec3 {
 	return Vec3{v.X * s, v.Y * s, v.Z * s}
 }

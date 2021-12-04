@@ -2,104 +2,33 @@ package main
 
 import (
 	"goraytracer/camera"
+	"goraytracer/material"
 	"goraytracer/ppm"
 	"goraytracer/ray"
+	"goraytracer/sphere"
 	"goraytracer/vec3"
-	"math"
 	"math/rand"
 	"time"
 )
-
-// figure out different material types
-// type Material struct {
-
-// }
-
-type HitRecord struct {
-	Hit      bool
-	Distance float64
-	Point    vec3.Vec3
-	Normal   vec3.Vec3
-}
-
-type Sphere struct {
-	Center   vec3.Vec3
-	Radius   float64
-	Material int
-}
-
-func Hit(s *Sphere, r *ray.Ray, minDistance float64, maxDistance float64) HitRecord {
-
-	// solve the quadratic equation to see if ray intersects sphere at all
-	originToCenter := vec3.Sub(r.Origin, s.Center)
-	a := vec3.Dot(r.Direction, r.Direction)
-	halfB := vec3.Dot(originToCenter, r.Direction)
-	c := vec3.Dot(originToCenter, originToCenter) - (s.Radius * s.Radius)
-	discriminant := halfB*halfB - (a * c)
-	if discriminant < 0 {
-		return HitRecord{Hit: false}
-	}
-
-	// assert that intersection lies between min and max distance bounds
-	sqrtD := math.Sqrt(discriminant)
-	root := (-halfB - sqrtD) / a
-	if root < minDistance || maxDistance < root {
-		root = (-halfB + sqrtD) / a
-		if root < minDistance || maxDistance < root {
-			return HitRecord{Hit: false}
-		}
-	}
-
-	distance := root
-	point := r.At(distance)
-	outwardNormal := vec3.MultiplyScalar(vec3.Sub(point, s.Center), 1.0/s.Radius)
-	outwardNormal = outwardNormal.Normalize()
-	isFrontFace := vec3.Dot(r.Direction, outwardNormal) < 0
-
-	var normal vec3.Vec3
-
-	if isFrontFace {
-		normal = outwardNormal
-	} else {
-		normal = vec3.MultiplyScalar(outwardNormal, -1.0)
-	}
-
-	return HitRecord{Hit: true, Distance: distance, Point: point, Normal: normal}
-}
 
 func lerp(v0 float64, v1 float64, t float64) float64 {
 	return (1.0-t)*v0 + t*v1
 }
 
-func findClosestSphereHit(spheres []Sphere, ray *ray.Ray) HitRecord {
-	minDistance := .001
-	maxDistance := math.Inf(1)
-
-	closetHit := HitRecord{Hit: false}
-
-	for _, sphere := range spheres {
-		hitRecord := Hit(&sphere, ray, minDistance, maxDistance)
-		if hitRecord.Hit {
-			maxDistance = hitRecord.Distance
-			closetHit = hitRecord
-		}
-	}
-
-	return closetHit
-}
-
-func rayColor(spheres []Sphere, ray *ray.Ray, depth int) vec3.Vec3 {
+func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int) vec3.Vec3 {
 	if depth <= 0 {
 		return vec3.Vec3{}
 	}
 
-	hitRecord := findClosestSphereHit(spheres, ray)
+	hitRecord := sphere.FindClosestSphereHit(spheres, ray)
 
+	// scatter and recurse if there's a hit record
 	if hitRecord.Hit {
-		// scatter and recurse
-		return vec3.Vec3{X: 1.0, Y: 0.0, Z: 0.0}
+		attenuation, scatteredRay := hitRecord.Material.Scatter(*ray, hitRecord.Point, hitRecord.Normal)
+		return vec3.Multiply(attenuation, rayColor(spheres, &scatteredRay, depth-1))
 	}
 
+	// if there's no sphere hit, render the sky
 	unitDirection := ray.Direction.Normalize()
 	t := .5 * (unitDirection.Y + 1.0)
 	return vec3.Add(
@@ -112,15 +41,29 @@ func main() {
 	randSeed := rand.NewSource(time.Now().UnixMicro())
 	r1 := rand.New(randSeed)
 
-	maxDepth := 50
-	samplesPerPixel := 50
+	maxDepth := 10
+	samplesPerPixel := 100
 	aspectRatio := 4.0 / 3.0
 	imageWidth := 640
 	imageHeight := int(float64(imageWidth) / aspectRatio)
 
 	// define our scene
-	spheres := make([]Sphere, 1)
-	spheres[0] = Sphere{Center: vec3.Vec3{X: 0, Y: 0, Z: 1}, Radius: .5, Material: 1}
+	spheres := make([]sphere.Sphere, 3)
+
+	spheres[0] = sphere.Sphere{
+		Center:   vec3.Vec3{X: 0, Y: 0, Z: 1},
+		Radius:   .5,
+		Material: material.Lambertian{Albedo: vec3.Vec3{X: .7, Y: .7, Z: .7}}}
+
+	spheres[1] = sphere.Sphere{
+		Center:   vec3.Vec3{X: 1, Y: 0, Z: 1},
+		Radius:   .5,
+		Material: material.Lambertian{Albedo: vec3.Vec3{X: 0.8, Y: .1, Z: .2}}}
+
+	spheres[2] = sphere.Sphere{
+		Center:   vec3.Vec3{X: 0, Y: -100.5, Z: 0},
+		Radius:   100,
+		Material: material.Lambertian{Albedo: vec3.Vec3{X: 0.0, Y: .7, Z: .7}}}
 
 	pixels := make([]ppm.Pixel, imageWidth*imageHeight)
 
@@ -130,6 +73,7 @@ func main() {
 
 	index := 0
 	for j := imageHeight - 1; j >= 0; j-- {
+		println(j)
 		for i := 0; i < imageWidth; i++ {
 
 			pixelColor := vec3.Vec3{}
