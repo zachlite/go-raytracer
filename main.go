@@ -1,41 +1,103 @@
 package main
 
 import (
-	"fmt"
 	"goraytracer/camera"
+	"goraytracer/ppm"
 	"goraytracer/ray"
 	"goraytracer/vec3"
+	"math"
 	"math/rand"
-	"os"
-	"strings"
 	"time"
 )
 
-type pixel struct {
-	r int
-	g int
-	b int
+// figure out different material types
+// type Material struct {
+
+// }
+
+type HitRecord struct {
+	Hit      bool
+	Distance float64
+	Point    vec3.Vec3
+	Normal   vec3.Vec3
 }
 
-func buildPPM(imageWidth int, imageHeight int, pixels []pixel) string {
-	ppmHeader := fmt.Sprintf("P3\n%d %d\n255\n", imageWidth, imageHeight)
-	var ppmBody strings.Builder
+type Sphere struct {
+	Center   vec3.Vec3
+	Radius   float64
+	Material int
+}
 
-	for _, pixel := range pixels {
-		ppmBody.WriteString(fmt.Sprintf("%d %d %d\n", pixel.r, pixel.g, pixel.b))
+func Hit(s *Sphere, r *ray.Ray, minDistance float64, maxDistance float64) HitRecord {
+
+	// solve the quadratic equation to see if ray intersects sphere at all
+	originToCenter := vec3.Sub(r.Origin, s.Center)
+	a := vec3.Dot(r.Direction, r.Direction)
+	halfB := vec3.Dot(originToCenter, r.Direction)
+	c := vec3.Dot(originToCenter, originToCenter) - (s.Radius * s.Radius)
+	discriminant := halfB*halfB - (a * c)
+	if discriminant < 0 {
+		return HitRecord{Hit: false}
 	}
 
-	ppmFile := ppmHeader + ppmBody.String()
-	return ppmFile
+	// assert that intersection lies between min and max distance bounds
+	sqrtD := math.Sqrt(discriminant)
+	root := (-halfB - sqrtD) / a
+	if root < minDistance || maxDistance < root {
+		root = (-halfB + sqrtD) / a
+		if root < minDistance || maxDistance < root {
+			return HitRecord{Hit: false}
+		}
+	}
+
+	distance := root
+	point := r.At(distance)
+	outwardNormal := vec3.MultiplyScalar(vec3.Sub(point, s.Center), 1.0/s.Radius)
+	outwardNormal = outwardNormal.Normalize()
+	isFrontFace := vec3.Dot(r.Direction, outwardNormal) < 0
+
+	var normal vec3.Vec3
+
+	if isFrontFace {
+		normal = outwardNormal
+	} else {
+		normal = vec3.MultiplyScalar(outwardNormal, -1.0)
+	}
+
+	return HitRecord{Hit: true, Distance: distance, Point: point, Normal: normal}
 }
 
-func writePPM(s string) {
-	os.WriteFile("image.ppm", []byte(s), 0644)
+func lerp(v0 float64, v1 float64, t float64) float64 {
+	return (1.0-t)*v0 + t*v1
 }
 
-func rayColor(ray *ray.Ray, depth int) vec3.Vec3 {
+func findClosestSphereHit(spheres []Sphere, ray *ray.Ray) HitRecord {
+	minDistance := .001
+	maxDistance := math.Inf(1)
+
+	closetHit := HitRecord{Hit: false}
+
+	for _, sphere := range spheres {
+		hitRecord := Hit(&sphere, ray, minDistance, maxDistance)
+		if hitRecord.Hit {
+			maxDistance = hitRecord.Distance
+			closetHit = hitRecord
+		}
+	}
+
+	return closetHit
+}
+
+func rayColor(spheres []Sphere, ray *ray.Ray, depth int) vec3.Vec3 {
 	if depth <= 0 {
 		return vec3.Vec3{}
+	}
+
+	hitRecord := findClosestSphereHit(spheres, ray)
+
+	if hitRecord.Hit {
+		// scatter and recurse
+		return vec3.Vec3{X: 1.0, Y: 0.0, Z: 0.0}
 	}
 
 	unitDirection := ray.Direction.Normalize()
@@ -44,10 +106,6 @@ func rayColor(ray *ray.Ray, depth int) vec3.Vec3 {
 		vec3.MultiplyScalar(vec3.Vec3{X: 1.0, Y: 1.0, Z: 1.0}, 1.0-t),
 		vec3.MultiplyScalar(vec3.Vec3{X: .5, Y: .7, Z: 1.0}, t),
 	)
-}
-
-func lerp(v0 float64, v1 float64, t float64) float64 {
-	return (1.0-t)*v0 + t*v1
 }
 
 func main() {
@@ -60,7 +118,11 @@ func main() {
 	imageWidth := 640
 	imageHeight := int(float64(imageWidth) / aspectRatio)
 
-	pixels := make([]pixel, imageWidth*imageHeight)
+	// define our scene
+	spheres := make([]Sphere, 1)
+	spheres[0] = Sphere{Center: vec3.Vec3{X: 0, Y: 0, Z: 1}, Radius: .5, Material: 1}
+
+	pixels := make([]ppm.Pixel, imageWidth*imageHeight)
 
 	var camera camera.Camera
 	camera.Init(aspectRatio)
@@ -77,24 +139,22 @@ func main() {
 				u := (float64(i) + r1.Float64()) / (float64(imageWidth) - 1)
 				v := (float64(j) + r1.Float64()) / (float64(imageHeight) - 1)
 				ray := camera.GetRay(u, v)
-				pixelColor = vec3.Add(pixelColor, rayColor(&ray, maxDepth))
+				pixelColor = vec3.Add(pixelColor, rayColor(spheres, &ray, maxDepth))
 			}
 
 			// average pixel color
 			pixelColor = vec3.MultiplyScalar(pixelColor, 1.0/float64(samplesPerPixel))
 
 			// map to range [0-255]
-			pixel := pixel{
-				r: int(lerp(0, 255, pixelColor.X)),
-				g: int(lerp(0, 255, pixelColor.Y)),
-				b: int(lerp(0, 255, pixelColor.Z)),
+			pixels[index] = ppm.Pixel{
+				R: int(lerp(0, 255, pixelColor.X)),
+				G: int(lerp(0, 255, pixelColor.Y)),
+				B: int(lerp(0, 255, pixelColor.Z)),
 			}
 
-			// save
-			pixels[index] = pixel
 			index++
 		}
 	}
 
-	writePPM(buildPPM(imageWidth, imageHeight, pixels))
+	ppm.Write("image.ppm", ppm.Build(imageWidth, imageHeight, pixels))
 }

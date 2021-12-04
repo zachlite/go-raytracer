@@ -6,6 +6,10 @@ type Vec3 struct {
 	X, Y, Z float64
 }
 
+func Dot(a Vec3, b Vec3) float64 {
+	return a.X*b.X + a.Y*b.Y + a.Z*b.Z
+}
+
 func Add(a Vec3, b Vec3) Vec3 {
 	return Vec3{a.X + b.X, a.Y + b.Y, a.Z + b.Z}
 }
@@ -27,7 +31,7 @@ func MultiplyScalar(v Vec3, s float64) Vec3 {
 }
 
 func (v *Vec3) Normalize() Vec3 {
-	length := v.X*v.X + v.Y*v.Y + v.Z*v.Z
+	length := Dot(*v, *v)
 	if length > 0 {
 		length = 1.0 / math.Sqrt(length)
 	}
