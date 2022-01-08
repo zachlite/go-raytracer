@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"goraytracer/camera"
 	"goraytracer/material"
@@ -8,7 +9,10 @@ import (
 	"goraytracer/ray"
 	"goraytracer/sphere"
 	"goraytracer/vec3"
+	"log"
 	"math/rand"
+	"os"
+	"runtime/pprof"
 	"sync"
 	"time"
 )
@@ -59,6 +63,17 @@ func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Ca
 
 func main() {
 
+	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	const aspectRatio = 4.0 / 3.0
 	const imageWidth = 640
 	const imageHeight = int(float64(imageWidth) / aspectRatio)
@@ -89,15 +104,6 @@ func main() {
 	split := 8
 
 	wg := sync.WaitGroup{}
-
-	// f, err := os.Create("cpu.prof")
-
-	// if err != nil {
-	// 	panic("bad file")
-	// }
-
-	// pprof.StartCPUProfile(f)
-	// defer pprof.StopCPUProfile()
 
 	for xRegion := 0; xRegion < split; xRegion++ {
 		for yRegion := 0; yRegion < split; yRegion++ {
