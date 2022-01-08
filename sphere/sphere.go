@@ -45,8 +45,7 @@ func hit(s *Sphere, r *ray.Ray, minDistance float64, maxDistance float64) HitRec
 
 	distance := root
 	point := r.At(distance)
-	outwardNormal := vec3.MultiplyScalar(vec3.Sub(point, s.Center), 1.0/s.Radius)
-	outwardNormal = outwardNormal.Normalize()
+	outwardNormal := vec3.MultiplyScalar(vec3.Sub(point, s.Center), 1.0/s.Radius).Normalized()
 	isFrontFace := vec3.Dot(r.Direction, outwardNormal) < 0
 
 	var normal vec3.Vec3

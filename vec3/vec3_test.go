@@ -19,7 +19,7 @@ func TestNormalizeVectorLengthIsOne(t *testing.T) {
 	}
 
 	for i, vector := range vectors {
-		l := vec3.Length(vector.Normalize())
+		l := vector.Normalized().Length()
 		if !nearOne(l) {
 			t.Error(i, l)
 		}
@@ -33,9 +33,7 @@ func TestRandomVectorInUnitSphereHasLength_LTE_One(t *testing.T) {
 	for i := 0; i < 10000; i++ {
 
 		randomVec := vec3.RandomInUnitSphere(r)
-		length := vec3.Length(randomVec)
-
-		if length > 1 {
+		if randomVec.Length() > 1 {
 			t.FailNow()
 		}
 	}

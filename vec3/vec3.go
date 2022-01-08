@@ -41,8 +41,8 @@ func MultiplyScalar(v Vec3, s float64) Vec3 {
 	return Vec3{v.X * s, v.Y * s, v.Z * s}
 }
 
-func (v *Vec3) Normalize() Vec3 {
-	length := Dot(*v, *v)
+func (v Vec3) Normalized() Vec3 {
+	length := Dot(v, v)
 	if length > 0 {
 		length = 1.0 / math.Sqrt(length)
 	}
@@ -50,8 +50,13 @@ func (v *Vec3) Normalize() Vec3 {
 	return Vec3{X: v.X * length, Y: v.Y * length, Z: v.Z * length}
 }
 
-func Length(v Vec3) float64 {
+func (v Vec3) Length() float64 {
 	return math.Sqrt(Dot(v, v))
+}
+
+func (v *Vec3) NearZero() bool {
+	limit := .00000001
+	return math.Abs(v.X) < limit && math.Abs(v.Y) < limit && math.Abs(v.Z) < limit
 }
 
 // return a vector with length between 0 and 1

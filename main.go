@@ -33,7 +33,7 @@ func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int, random *rand.Ran
 	}
 
 	// if there's no sphere hit, render the sky
-	unitDirection := ray.Direction.Normalize()
+	unitDirection := ray.Direction.Normalized()
 	t := .5 * (unitDirection.Y + 1.0)
 	return vec3.Add(
 		vec3.MultiplyScalar(vec3.Vec3{X: 1.0, Y: 1.0, Z: 1.0}, 1.0-t),
