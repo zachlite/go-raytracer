@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"goraytracer/camera"
 	"goraytracer/material"
 	"goraytracer/ppm"
@@ -8,6 +9,7 @@ import (
 	"goraytracer/sphere"
 	"goraytracer/vec3"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -15,7 +17,7 @@ func lerp(v0 float64, v1 float64, t float64) float64 {
 	return (1.0-t)*v0 + t*v1
 }
 
-func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int) vec3.Vec3 {
+func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int, random *rand.Rand) vec3.Vec3 {
 	if depth <= 0 {
 		return vec3.Vec3{}
 	}
@@ -24,8 +26,8 @@ func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int) vec3.Vec3 {
 
 	// scatter and recurse if there's a hit record
 	if hitRecord.Hit {
-		attenuation, scatteredRay := hitRecord.Material.Scatter(*ray, hitRecord.Point, hitRecord.Normal)
-		return vec3.Multiply(attenuation, rayColor(spheres, &scatteredRay, depth-1))
+		attenuation, scatteredRay := hitRecord.Material.Scatter(*ray, hitRecord.Point, hitRecord.Normal, random)
+		return vec3.Multiply(attenuation, rayColor(spheres, &scatteredRay, depth-1, random))
 	}
 
 	// if there's no sphere hit, render the sky
@@ -37,15 +39,29 @@ func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int) vec3.Vec3 {
 	)
 }
 
-func main() {
-	randSeed := rand.NewSource(time.Now().UnixMicro())
-	r1 := rand.New(randSeed)
+func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Camera, spheres []sphere.Sphere) vec3.Vec3 {
+	r := rand.New(rand.NewSource(time.Now().UnixMicro()))
+	const samplesPerPixel = 100
+	const maxDepth = 3
+	pixelColor := vec3.Vec3{}
 
-	maxDepth := 10
-	samplesPerPixel := 100
-	aspectRatio := 4.0 / 3.0
-	imageWidth := 640
-	imageHeight := int(float64(imageWidth) / aspectRatio)
+	for sample := 0; sample < samplesPerPixel; sample++ {
+		u := (float64(i) + r.Float64()) / (float64(imageWidth) - 1)
+		v := (float64(j) + r.Float64()) / (float64(imageHeight) - 1)
+		ray := camera.GetRay(u, v)
+		pixelColor = vec3.Add(pixelColor, rayColor(spheres, &ray, maxDepth, r))
+	}
+
+	// average pixel color
+	pixelColor = vec3.MultiplyScalar(pixelColor, 1.0/float64(samplesPerPixel))
+	return pixelColor
+}
+
+func main() {
+
+	const aspectRatio = 4.0 / 3.0
+	const imageWidth = 640
+	const imageHeight = int(float64(imageWidth) / aspectRatio)
 
 	// define our scene
 	spheres := make([]sphere.Sphere, 3)
@@ -65,40 +81,63 @@ func main() {
 		Radius:   100,
 		Material: material.Lambertian{Albedo: vec3.Vec3{X: 0.0, Y: .7, Z: .7}}}
 
-	pixels := make([]ppm.Pixel, imageWidth*imageHeight)
+	frameBuffer := make([]ppm.Pixel, imageWidth*imageHeight)
 
 	var camera camera.Camera
 	camera.Init(aspectRatio)
 	camera.GetRay(1.0, 1.0)
+	split := 8
 
-	index := 0
-	for j := imageHeight - 1; j >= 0; j-- {
-		println(j)
-		for i := 0; i < imageWidth; i++ {
+	wg := sync.WaitGroup{}
 
-			pixelColor := vec3.Vec3{}
+	// f, err := os.Create("cpu.prof")
 
-			// sample
-			for sample := 0; sample < samplesPerPixel; sample++ {
-				u := (float64(i) + r1.Float64()) / (float64(imageWidth) - 1)
-				v := (float64(j) + r1.Float64()) / (float64(imageHeight) - 1)
-				ray := camera.GetRay(u, v)
-				pixelColor = vec3.Add(pixelColor, rayColor(spheres, &ray, maxDepth))
-			}
+	// if err != nil {
+	// 	panic("bad file")
+	// }
 
-			// average pixel color
-			pixelColor = vec3.MultiplyScalar(pixelColor, 1.0/float64(samplesPerPixel))
+	// pprof.StartCPUProfile(f)
+	// defer pprof.StopCPUProfile()
 
-			// map to range [0-255]
-			pixels[index] = ppm.Pixel{
-				R: int(lerp(0, 255, pixelColor.X)),
-				G: int(lerp(0, 255, pixelColor.Y)),
-				B: int(lerp(0, 255, pixelColor.Z)),
-			}
+	for xRegion := 0; xRegion < split; xRegion++ {
+		for yRegion := 0; yRegion < split; yRegion++ {
+			wg.Add(1)
 
-			index++
+			iMin := imageWidth / split * xRegion    // 0 - 560
+			iMax := iMin + (imageWidth / split) - 1 // 79 - 639
+
+			jMin := imageHeight / split * yRegion
+			jMax := jMin + (imageHeight / split) - 1
+
+			go func(iMin int, iMax int, jMin int, jMax int) {
+				defer func() {
+					fmt.Println("region done: ", iMin, iMax, jMin, jMax)
+					wg.Done()
+				}()
+
+				for i := iMin; i <= iMax; i++ {
+					for j := jMin; j <= jMax; j++ {
+
+						color := samplePixel(i, j, imageWidth, imageHeight, camera, spheres)
+
+						index := (imageHeight-1-j)*imageWidth + i
+
+						// map to range [0-255]
+						frameBuffer[index] = ppm.Pixel{
+							R: int(lerp(0, 255, color.X)),
+							G: int(lerp(0, 255, color.Y)),
+							B: int(lerp(0, 255, color.Z)),
+						}
+
+					}
+				}
+
+			}(iMin, iMax, jMin, jMax)
 		}
 	}
 
-	ppm.Write("image.ppm", ppm.Build(imageWidth, imageHeight, pixels))
+	wg.Wait()
+	// done
+
+	ppm.Write("image.ppm", ppm.Build(imageWidth, imageHeight, frameBuffer))
 }

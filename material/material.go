@@ -9,7 +9,7 @@ import (
 
 type Material interface {
 	// ray, hit point, hit normal -> attenuation, scatter
-	Scatter(r ray.Ray, hitPoint vec3.Vec3, hitNormal vec3.Vec3) (vec3.Vec3, ray.Ray)
+	Scatter(r ray.Ray, hitPoint vec3.Vec3, hitNormal vec3.Vec3, random *rand.Rand) (vec3.Vec3, ray.Ray)
 }
 
 type Lambertian struct {
@@ -21,10 +21,10 @@ type Metal struct {
 	Fuzz   vec3.Vec3
 }
 
-func randomScatter() vec3.Vec3 {
+func randomScatter(random *rand.Rand) vec3.Vec3 {
 	scale := 1.0
-	r := rand.Float64()
-	z := rand.Float64()
+	r := random.Float64()
+	z := random.Float64()
 	zScale := math.Sqrt(1.0-z*z) * scale
 	return vec3.Vec3{
 		X: math.Cos(r) * zScale,
@@ -38,9 +38,9 @@ func nearZero(v vec3.Vec3) bool {
 	return math.Abs(v.X) < limit && math.Abs(v.Y) < limit && math.Abs(v.Z) < limit
 }
 
-func (material Lambertian) Scatter(r ray.Ray, hitPoint vec3.Vec3, hitNormal vec3.Vec3) (vec3.Vec3, ray.Ray) {
+func (material Lambertian) Scatter(r ray.Ray, hitPoint vec3.Vec3, hitNormal vec3.Vec3, random *rand.Rand) (vec3.Vec3, ray.Ray) {
 
-	scatterDir := vec3.Add(hitNormal, randomScatter())
+	scatterDir := vec3.Add(hitNormal, randomScatter(random))
 
 	if nearZero(scatterDir) {
 		scatterDir = hitNormal
