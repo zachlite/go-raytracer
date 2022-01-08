@@ -5,21 +5,19 @@ import (
 	"fmt"
 	"goraytracer/camera"
 	"goraytracer/material"
+	"goraytracer/mathutils"
 	"goraytracer/ppm"
 	"goraytracer/ray"
 	"goraytracer/sphere"
 	"goraytracer/vec3"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"runtime/pprof"
 	"sync"
 	"time"
 )
-
-func lerp(v0 float64, v1 float64, t float64) float64 {
-	return (1.0-t)*v0 + t*v1
-}
 
 func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int, random *rand.Rand) vec3.Vec3 {
 	if depth <= 0 {
@@ -46,7 +44,7 @@ func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int, random *rand.Ran
 func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Camera, spheres []sphere.Sphere) vec3.Vec3 {
 	r := rand.New(rand.NewSource(time.Now().UnixMicro()))
 	const samplesPerPixel = 100
-	const maxDepth = 3
+	const maxDepth = 10
 	pixelColor := vec3.Vec3{}
 
 	for sample := 0; sample < samplesPerPixel; sample++ {
@@ -56,8 +54,13 @@ func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Ca
 		pixelColor = vec3.Add(pixelColor, rayColor(spheres, &ray, maxDepth, r))
 	}
 
-	// average pixel color
-	pixelColor = vec3.MultiplyScalar(pixelColor, 1.0/float64(samplesPerPixel))
+	// average and gamma correct
+	scale := 1.0 / float64(samplesPerPixel)
+	pixelColor = vec3.MultiplyScalar(pixelColor, scale)
+	pixelColor.X = math.Sqrt(pixelColor.X)
+	pixelColor.Y = math.Sqrt(pixelColor.Y)
+	pixelColor.Z = math.Sqrt(pixelColor.Z)
+
 	return pixelColor
 }
 
@@ -130,9 +133,9 @@ func main() {
 
 						// map to range [0-255]
 						frameBuffer[index] = ppm.Pixel{
-							R: int(lerp(0, 255, color.X)),
-							G: int(lerp(0, 255, color.Y)),
-							B: int(lerp(0, 255, color.Z)),
+							R: int(mathutils.Lerp(0, 255, color.X)),
+							G: int(mathutils.Lerp(0, 255, color.Y)),
+							B: int(mathutils.Lerp(0, 255, color.Z)),
 						}
 
 					}

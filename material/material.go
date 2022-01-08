@@ -21,18 +21,6 @@ type Metal struct {
 	Fuzz   vec3.Vec3
 }
 
-func randomScatter(random *rand.Rand) vec3.Vec3 {
-	scale := 1.0
-	r := random.Float64()
-	z := random.Float64()
-	zScale := math.Sqrt(1.0-z*z) * scale
-	return vec3.Vec3{
-		X: math.Cos(r) * zScale,
-		Y: math.Sin(r) * zScale,
-		Z: z * scale,
-	}
-}
-
 func nearZero(v vec3.Vec3) bool {
 	limit := .00000001
 	return math.Abs(v.X) < limit && math.Abs(v.Y) < limit && math.Abs(v.Z) < limit
@@ -40,7 +28,9 @@ func nearZero(v vec3.Vec3) bool {
 
 func (material Lambertian) Scatter(r ray.Ray, hitPoint vec3.Vec3, hitNormal vec3.Vec3, random *rand.Rand) (vec3.Vec3, ray.Ray) {
 
-	scatterDir := vec3.Add(hitNormal, randomScatter(random))
+	randomDirection := vec3.RandomInUnitSphere(random)
+	randomDirection = randomDirection.Normalize()
+	scatterDir := vec3.Add(hitNormal, randomDirection)
 
 	if nearZero(scatterDir) {
 		scatterDir = hitNormal

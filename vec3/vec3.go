@@ -1,6 +1,9 @@
 package vec3
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 type Vec3 struct {
 	X, Y, Z float64
@@ -45,4 +48,25 @@ func (v *Vec3) Normalize() Vec3 {
 	}
 
 	return Vec3{X: v.X * length, Y: v.Y * length, Z: v.Z * length}
+}
+
+func Length(v Vec3) float64 {
+	return math.Sqrt(Dot(v, v))
+}
+
+// return a vector with length between 0 and 1
+func RandomInUnitSphere(r *rand.Rand) Vec3 {
+	var u = r.Float64()
+	var v = r.Float64()
+	var theta = u * 2.0 * math.Pi
+	var phi = math.Acos(2.0*v - 1.0)
+	var _r = math.Cbrt(r.Float64())
+	var sinTheta = math.Sin(theta)
+	var cosTheta = math.Cos(theta)
+	var sinPhi = math.Sin(phi)
+	var cosPhi = math.Cos(phi)
+	var x = _r * sinPhi * cosTheta
+	var y = _r * sinPhi * sinTheta
+	var z = _r * cosPhi
+	return Vec3{x, y, z}
 }
