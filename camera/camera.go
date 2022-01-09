@@ -31,6 +31,6 @@ func (camera *Camera) GetRay(u float64, v float64) ray.Ray {
 		Direction: vec3.Add(
 			camera.lowerLeftCorner,
 			vec3.Add(vec3.MultiplyScalar(camera.right, u), vec3.MultiplyScalar(camera.up, v)),
-		),
+		).Normalized(),
 	}
 }

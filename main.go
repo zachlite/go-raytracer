@@ -107,7 +107,7 @@ func main() {
 	const imageHeight = int(float64(imageWidth) / aspectRatio)
 
 	// define our scene
-	meshes := make([]Mesh, 3)
+	meshes := make([]Mesh, 4)
 
 	meshes[0] = Mesh{
 		Geometry: geometry.Sphere{
@@ -136,6 +136,17 @@ func main() {
 		},
 		Material: material.Lambertian{
 			Albedo: vec3.Vec3{X: 0.0, Y: .7, Z: .7},
+		},
+	}
+
+	p1 := vec3.Vec3{X: -1.25, Y: -.5, Z: 1}
+	p2 := vec3.Vec3{X: -1.0, Y: .4, Z: 1}
+	p3 := vec3.Vec3{X: -.75, Y: 0.0, Z: 1}
+
+	meshes[3] = Mesh{
+		Geometry: geometry.NewTriangle(p1, p2, p3),
+		Material: material.Lambertian{
+			Albedo: vec3.Vec3{X: .8, Y: .1, Z: .2},
 		},
 	}
 

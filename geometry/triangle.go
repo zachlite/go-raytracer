@@ -12,14 +12,61 @@ type Triangle struct {
 	Normal vec3.Vec3
 }
 
-func (triangle *Triangle) ComputeNormal() {
+func NewTriangle(p1 vec3.Vec3, p2 vec3.Vec3, p3 vec3.Vec3) Triangle {
 
+	// TODO: confirm that winding order is correct
+	// TODO: be consistent when calculating edges for ray-triangle insersection
+	edge1 := vec3.Sub(p2, p1)
+	edge2 := vec3.Sub(p3, p1)
+	normal := vec3.Cross(edge1, edge2).Normalized()
+	return Triangle{
+		P1:     p1,
+		P2:     p2,
+		P3:     p3,
+		Normal: normal,
+	}
 }
 
 func (triangle Triangle) Hit(ray *ray.Ray, minDistance float64, maxDistance float64) HitRecord {
 	// ray - triangle intersection
+	// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 
-	// did this intersection happen within min and max distance?
+	const EPSILON = 0.0000001
 
-	return HitRecord{Normal: triangle.Normal}
+	edge1 := vec3.Sub(triangle.P2, triangle.P1)
+	edge2 := vec3.Sub(triangle.P3, triangle.P1)
+
+	h := vec3.Cross(ray.Direction, edge2)
+	a := vec3.Dot(edge1, h)
+
+	if a > -EPSILON && a < EPSILON {
+		return HitRecord{Hit: false} // ray is parallel to triangle
+	}
+
+	f := 1.0 / a
+	s := vec3.Sub(ray.Origin, triangle.P1)
+	u := f * vec3.Dot(s, h)
+
+	if u < 0.0 || u > 1.0 {
+		return HitRecord{Hit: false}
+	}
+
+	q := vec3.Cross(s, edge1)
+	v := f * vec3.Dot(ray.Direction, q)
+
+	if v < 0.0 || u+v > 1.0 {
+		return HitRecord{Hit: false}
+	}
+
+	t := f * vec3.Dot(edge2, q)
+	if t > EPSILON && t >= minDistance && t <= maxDistance {
+		return HitRecord{
+			Hit:      true,
+			Distance: t,
+			Point:    ray.At(t),
+			Normal:   triangle.Normal,
+		}
+	}
+
+	return HitRecord{Hit: false}
 }
