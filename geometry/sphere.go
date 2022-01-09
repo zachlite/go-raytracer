@@ -1,27 +1,17 @@
-package sphere
+package geometry
 
 import (
-	"goraytracer/material"
 	"goraytracer/ray"
 	"goraytracer/vec3"
 	"math"
 )
 
-type HitRecord struct {
-	Hit      bool
-	Distance float64
-	Point    vec3.Vec3
-	Normal   vec3.Vec3
-	Material material.Material
-}
-
 type Sphere struct {
-	Center   vec3.Vec3
-	Radius   float64
-	Material material.Material
+	Center vec3.Vec3
+	Radius float64
 }
 
-func hit(s *Sphere, r *ray.Ray, minDistance float64, maxDistance float64) HitRecord {
+func (s Sphere) Hit(r *ray.Ray, minDistance float64, maxDistance float64) HitRecord {
 
 	// solve the quadratic equation to see if ray intersects sphere at all
 	originToCenter := vec3.Sub(r.Origin, s.Center)
@@ -56,22 +46,5 @@ func hit(s *Sphere, r *ray.Ray, minDistance float64, maxDistance float64) HitRec
 		normal = vec3.MultiplyScalar(outwardNormal, -1.0)
 	}
 
-	return HitRecord{Hit: true, Distance: distance, Point: point, Normal: normal, Material: s.Material}
-}
-
-func FindClosestSphereHit(spheres []Sphere, ray *ray.Ray) HitRecord {
-	minDistance := .001
-	maxDistance := math.Inf(1)
-
-	closetHit := HitRecord{Hit: false}
-
-	for _, sphere := range spheres {
-		hitRecord := hit(&sphere, ray, minDistance, maxDistance)
-		if hitRecord.Hit {
-			maxDistance = hitRecord.Distance
-			closetHit = hitRecord
-		}
-	}
-
-	return closetHit
+	return HitRecord{Hit: true, Distance: distance, Point: point, Normal: normal}
 }

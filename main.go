@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"goraytracer/camera"
+	"goraytracer/geometry"
 	"goraytracer/material"
 	"goraytracer/mathutils"
 	"goraytracer/ppm"
 	"goraytracer/ray"
-	"goraytracer/sphere"
 	"goraytracer/vec3"
 	"log"
 	"math"
@@ -19,17 +19,42 @@ import (
 	"time"
 )
 
-func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int, random *rand.Rand) vec3.Vec3 {
+type Mesh struct {
+	Geometry geometry.Geometry
+	Material material.Material
+}
+
+func findClosestMeshHit(meshes []Mesh, ray *ray.Ray) (geometry.HitRecord, material.Material) {
+	minDistance := .001
+	maxDistance := math.Inf(1)
+
+	closetHit := geometry.HitRecord{Hit: false}
+	var material material.Material
+
+	for _, mesh := range meshes {
+		hitRecord := mesh.Geometry.Hit(ray, minDistance, maxDistance)
+		if hitRecord.Hit {
+			maxDistance = hitRecord.Distance
+			closetHit = hitRecord
+			material = mesh.Material
+		}
+
+	}
+
+	return closetHit, material
+}
+
+func rayColor(meshes []Mesh, ray *ray.Ray, depth int, random *rand.Rand) vec3.Vec3 {
 	if depth <= 0 {
 		return vec3.Vec3{}
 	}
 
-	hitRecord := sphere.FindClosestSphereHit(spheres, ray)
+	hitRecord, material := findClosestMeshHit(meshes, ray)
 
 	// scatter and recurse if there's a hit record
 	if hitRecord.Hit {
-		attenuation, scatteredRay := hitRecord.Material.Scatter(*ray, hitRecord.Point, hitRecord.Normal, random)
-		return vec3.Multiply(attenuation, rayColor(spheres, &scatteredRay, depth-1, random))
+		attenuation, scatteredRay := material.Scatter(*ray, hitRecord.Point, hitRecord.Normal, random)
+		return vec3.Multiply(attenuation, rayColor(meshes, &scatteredRay, depth-1, random))
 	}
 
 	// if there's no sphere hit, render the sky
@@ -41,7 +66,7 @@ func rayColor(spheres []sphere.Sphere, ray *ray.Ray, depth int, random *rand.Ran
 	)
 }
 
-func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Camera, spheres []sphere.Sphere) vec3.Vec3 {
+func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Camera, meshes []Mesh) vec3.Vec3 {
 	r := rand.New(rand.NewSource(time.Now().UnixMicro()))
 	const samplesPerPixel = 100
 	const maxDepth = 10
@@ -51,7 +76,7 @@ func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Ca
 		u := (float64(i) + r.Float64()) / (float64(imageWidth) - 1)
 		v := (float64(j) + r.Float64()) / (float64(imageHeight) - 1)
 		ray := camera.GetRay(u, v)
-		pixelColor = vec3.Add(pixelColor, rayColor(spheres, &ray, maxDepth, r))
+		pixelColor = vec3.Add(pixelColor, rayColor(meshes, &ray, maxDepth, r))
 	}
 
 	// average and gamma correct
@@ -82,22 +107,37 @@ func main() {
 	const imageHeight = int(float64(imageWidth) / aspectRatio)
 
 	// define our scene
-	spheres := make([]sphere.Sphere, 3)
+	meshes := make([]Mesh, 3)
 
-	spheres[0] = sphere.Sphere{
-		Center:   vec3.Vec3{X: 0, Y: 0, Z: 1},
-		Radius:   .5,
-		Material: material.Lambertian{Albedo: vec3.Vec3{X: .7, Y: .7, Z: .7}}}
+	meshes[0] = Mesh{
+		Geometry: geometry.Sphere{
+			Center: vec3.Vec3{X: 0, Y: 0, Z: 1},
+			Radius: .5,
+		},
+		Material: material.Lambertian{
+			Albedo: vec3.Vec3{X: .7, Y: .7, Z: .7},
+		},
+	}
 
-	spheres[1] = sphere.Sphere{
-		Center:   vec3.Vec3{X: 1, Y: 0, Z: 1},
-		Radius:   .5,
-		Material: material.Lambertian{Albedo: vec3.Vec3{X: 0.8, Y: .1, Z: .2}}}
+	meshes[1] = Mesh{
+		Geometry: geometry.Sphere{
+			Center: vec3.Vec3{X: 1, Y: 0, Z: 1},
+			Radius: .5,
+		},
+		Material: material.Lambertian{
+			Albedo: vec3.Vec3{X: .8, Y: .1, Z: .2},
+		},
+	}
 
-	spheres[2] = sphere.Sphere{
-		Center:   vec3.Vec3{X: 0, Y: -100.5, Z: 0},
-		Radius:   100,
-		Material: material.Lambertian{Albedo: vec3.Vec3{X: 0.0, Y: .7, Z: .7}}}
+	meshes[2] = Mesh{
+		Geometry: geometry.Sphere{
+			Center: vec3.Vec3{X: 0, Y: -100.5, Z: 0},
+			Radius: 100,
+		},
+		Material: material.Lambertian{
+			Albedo: vec3.Vec3{X: 0.0, Y: .7, Z: .7},
+		},
+	}
 
 	frameBuffer := make([]ppm.Pixel, imageWidth*imageHeight)
 
@@ -127,7 +167,7 @@ func main() {
 				for i := iMin; i <= iMax; i++ {
 					for j := jMin; j <= jMax; j++ {
 
-						color := samplePixel(i, j, imageWidth, imageHeight, camera, spheres)
+						color := samplePixel(i, j, imageWidth, imageHeight, camera, meshes)
 
 						index := (imageHeight-1-j)*imageWidth + i
 
