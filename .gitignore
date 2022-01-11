@@ -1,3 +1,11 @@
 .DS_Store
 *.prof
 *.ppm
+*.iml
+*.ipr
+*.iws
+.idea/
+/build/
+/dist/
+/out/
+go_build_goraytracer

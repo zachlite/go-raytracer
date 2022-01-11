@@ -14,10 +14,13 @@ func Dot(a Vec3, b Vec3) float64 {
 }
 
 func Cross(a Vec3, b Vec3) Vec3 {
+	x := a.Y*b.Z - a.Z*b.Y
+	y := a.Z*b.X - a.X*b.Z
+	z := a.X*b.Y - a.Y*b.X
 	return Vec3{
-		X: a.Y*b.Z - a.Z*b.Y,
-		Y: a.Z*b.X - a.X*b.Z,
-		Z: a.X*b.Y - a.Y*b.X,
+		X: x,
+		Y: y,
+		Z: z,
 	}
 }
 

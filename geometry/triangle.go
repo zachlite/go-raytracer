@@ -12,12 +12,16 @@ type Triangle struct {
 	Normal vec3.Vec3
 }
 
+func edges(p1 vec3.Vec3, p2 vec3.Vec3, p3 vec3.Vec3) (vec3.Vec3, vec3.Vec3) {
+	return vec3.Sub(p2, p1), vec3.Sub(p3, p1)
+}
+
 func NewTriangle(p1 vec3.Vec3, p2 vec3.Vec3, p3 vec3.Vec3) Triangle {
 
 	// TODO: confirm that winding order is correct
 	// TODO: be consistent when calculating edges for ray-triangle insersection
-	edge1 := vec3.Sub(p2, p1)
-	edge2 := vec3.Sub(p3, p1)
+
+	edge1, edge2 := edges(p1, p2, p3)
 	normal := vec3.Cross(edge1, edge2).Normalized()
 	return Triangle{
 		P1:     p1,
@@ -33,8 +37,7 @@ func (triangle Triangle) Hit(ray *ray.Ray, minDistance float64, maxDistance floa
 
 	const EPSILON = 0.0000001
 
-	edge1 := vec3.Sub(triangle.P2, triangle.P1)
-	edge2 := vec3.Sub(triangle.P3, triangle.P1)
+	edge1, edge2 := edges(triangle.P1, triangle.P2, triangle.P3)
 
 	h := vec3.Cross(ray.Direction, edge2)
 	a := vec3.Dot(edge1, h)

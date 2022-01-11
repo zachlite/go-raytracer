@@ -9,6 +9,7 @@ import (
 	"goraytracer/mathutils"
 	"goraytracer/ppm"
 	"goraytracer/ray"
+	samplemodels "goraytracer/sample_models"
 	"goraytracer/vec3"
 	"log"
 	"math"
@@ -103,48 +104,67 @@ func main() {
 	}
 
 	const aspectRatio = 4.0 / 3.0
-	const imageWidth = 640
+	const imageWidth = 320
 	const imageHeight = int(float64(imageWidth) / aspectRatio)
 
+	const x = 3290823
+
+	fmt.Println(x)
+
 	// define our scene
-	meshes := make([]Mesh, 4)
+	meshes := make([]Mesh, 2)
+
+	// meshes[0] = Mesh{
+	// 	Geometry: geometry.Sphere{
+	// 		Center: vec3.Vec3{X: 0, Y: 0, Z: 1},
+	// 		Radius: .5,
+	// 	},
+	// 	Material: material.Lambertian{
+	// 		Albedo: vec3.Vec3{X: .7, Y: .7, Z: .7},
+	// 	},
+	// }
+
+	// meshes[1] = Mesh{
+	// 	Geometry: geometry.Sphere{
+	// 		Center: vec3.Vec3{X: 1, Y: 0, Z: 1},
+	// 		Radius: .5,
+	// 	},
+	// 	Material: material.Lambertian{
+	// 		Albedo: vec3.Vec3{X: .8, Y: .1, Z: .2},
+	// 	},
+	// }
 
 	meshes[0] = Mesh{
-		Geometry: geometry.Sphere{
-			Center: vec3.Vec3{X: 0, Y: 0, Z: 1},
-			Radius: .5,
-		},
-		Material: material.Lambertian{
-			Albedo: vec3.Vec3{X: .7, Y: .7, Z: .7},
-		},
-	}
-
-	meshes[1] = Mesh{
-		Geometry: geometry.Sphere{
-			Center: vec3.Vec3{X: 1, Y: 0, Z: 1},
-			Radius: .5,
-		},
-		Material: material.Lambertian{
-			Albedo: vec3.Vec3{X: .8, Y: .1, Z: .2},
-		},
-	}
-
-	meshes[2] = Mesh{
 		Geometry: geometry.Sphere{
 			Center: vec3.Vec3{X: 0, Y: -100.5, Z: 0},
 			Radius: 100,
 		},
 		Material: material.Lambertian{
-			Albedo: vec3.Vec3{X: 0.0, Y: .7, Z: .7},
+			Albedo: vec3.Vec3{X: 0.7, Y: .7, Z: .7},
 		},
 	}
 
-	p1 := vec3.Vec3{X: -1.25, Y: -.5, Z: 1}
-	p2 := vec3.Vec3{X: -1.0, Y: .4, Z: 1}
-	p3 := vec3.Vec3{X: -.75, Y: 0.0, Z: 1}
+	// p1 := vec3.Vec3{X: -1.25, Y: -.5, Z: 1}
+	// p2 := vec3.Vec3{X: -1.0, Y: .4, Z: 1}
+	// p3 := vec3.Vec3{X: -.75, Y: 0.0, Z: 1}
 
-	meshes[3] = Mesh{
-		Geometry: geometry.NewTriangle(p1, p2, p3),
+	// let's load a model from some json
+
+	// triangles := make([]geometry.Triangle, 1)
+	// triangles = append(triangles, geometry.NewTriangle(p1, p2, p3))
+	// polygon := geometry.Polygon{Triangles: triangles}
+
+	// what's the proper abstraction for a collection of triangles?
+	// - a polygon
+
+	// what lives at oct-tree leaves?
+	// - geometry
+
+	// When I'm testing for ray intersections, I do not want to iterate through every triangle in a polygonal mesh.
+	// I only want to iterate through triangles that are at the oct-tree leaf node.
+
+	meshes[1] = Mesh{
+		Geometry: samplemodels.LoadBunny(),
 		Material: material.Lambertian{
 			Albedo: vec3.Vec3{X: .8, Y: .1, Z: .2},
 		},
