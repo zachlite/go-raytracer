@@ -49,8 +49,15 @@ func (s Sphere) Hit(r *ray.Ray, minDistance float64, maxDistance float64) HitRec
 	return HitRecord{Hit: true, Distance: distance, Point: point, Normal: normal}
 }
 
-func (s Sphere) AABBIntersections(aabb AABB) []*Sphere {
-	intersections := make([]*Sphere, 0)
+func pointInSphere(s Sphere, point vec3.Vec3) bool {
+	return math.Sqrt(
+		((point.X-s.Center.X)*(point.X-s.Center.X))+
+			((point.Y-s.Center.Y)*(point.Y-s.Center.Y))+
+			((point.Z-s.Center.Z)*(point.Y-s.Center.Z))) < s.Radius
+}
+
+func (s Sphere) AABBIntersections(aabb AABB) []Geometry {
+	intersections := make([]Geometry, 0)
 
 	if s.IntersectsAABB(aabb) {
 		intersections = append(intersections, &s)
@@ -60,7 +67,8 @@ func (s Sphere) AABBIntersections(aabb AABB) []*Sphere {
 }
 
 func (s Sphere) IntersectsAABB(aabb AABB) bool {
-
-	return false
-
+	x := math.Max(aabb.Min.X, math.Min(s.Center.X, aabb.Max.X))
+	y := math.Max(aabb.Min.Y, math.Min(s.Center.Y, aabb.Max.Y))
+	z := math.Max(aabb.Min.Z, math.Min(s.Center.Z, aabb.Max.Z))
+	return pointInSphere(s, vec3.Vec3{X: x, Y: y, Z: z})
 }

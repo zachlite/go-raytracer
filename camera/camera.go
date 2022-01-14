@@ -12,6 +12,7 @@ type Camera struct {
 	lowerLeftCorner vec3.Vec3
 }
 
+// TODO: define camera in world space coordinates
 func (camera *Camera) Init(aspectRatio float64) {
 	viewportHeight := 2.0
 	viewportWidth := viewportHeight * aspectRatio

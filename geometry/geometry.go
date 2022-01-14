@@ -17,7 +17,7 @@ type Geometry interface {
 	Hit(r *ray.Ray, minDistance float64, maxDistance float64) HitRecord
 
 	// Returns a reference to self or sub geometries that intersect with aabb
-	AABBIntersections(aabb AABB) []*Geometry
+	AABBIntersections(aabb AABB) []Geometry
 
 	IntersectsAABB(aabb AABB) bool
 }

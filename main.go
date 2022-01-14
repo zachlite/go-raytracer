@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"goraytracer/accel"
 	"goraytracer/camera"
 	"goraytracer/geometry"
 	"goraytracer/material"
@@ -10,7 +11,6 @@ import (
 	"goraytracer/mesh"
 	"goraytracer/ppm"
 	"goraytracer/ray"
-	samplemodels "goraytracer/sample_models"
 	"goraytracer/vec3"
 	"log"
 	"math"
@@ -104,63 +104,20 @@ func main() {
 	const imageHeight = int(float64(imageWidth) / aspectRatio)
 
 	// define our scene
-	meshes := make([]mesh.Mesh, 2)
-
-	// meshes[0] = Mesh{
-	// 	Geometry: geometry.Sphere{
-	// 		Center: vec3.Vec3{X: 0, Y: 0, Z: 1},
-	// 		Radius: .5,
-	// 	},
-	// 	Material: material.Lambertian{
-	// 		Albedo: vec3.Vec3{X: .7, Y: .7, Z: .7},
-	// 	},
-	// }
-
-	// meshes[1] = Mesh{
-	// 	Geometry: geometry.Sphere{
-	// 		Center: vec3.Vec3{X: 1, Y: 0, Z: 1},
-	// 		Radius: .5,
-	// 	},
-	// 	Material: material.Lambertian{
-	// 		Albedo: vec3.Vec3{X: .8, Y: .1, Z: .2},
-	// 	},
-	// }
+	meshes := make([]mesh.Mesh, 1)
 
 	meshes[0] = mesh.Mesh{
 		Geometry: geometry.Sphere{
-			Center: vec3.Vec3{X: 0, Y: -100.5, Z: 0},
-			Radius: 100,
+			Center: vec3.Vec3{X: 0, Y: 0, Z: 0},
+			Radius: .1,
 		},
 		Material: material.Lambertian{
 			Albedo: vec3.Vec3{X: 0.7, Y: .7, Z: .7},
 		},
 	}
 
-	// p1 := vec3.Vec3{X: -1.25, Y: -.5, Z: 1}
-	// p2 := vec3.Vec3{X: -1.0, Y: .4, Z: 1}
-	// p3 := vec3.Vec3{X: -.75, Y: 0.0, Z: 1}
-
-	// let's load a model from some json
-
-	// triangles := make([]geometry.Triangle, 1)
-	// triangles = append(triangles, geometry.NewTriangle(p1, p2, p3))
-	// polygon := geometry.Polygon{Triangles: triangles}
-
-	// what's the proper abstraction for a collection of triangles?
-	// - a polygon
-
-	// what lives at oct-tree leaves?
-	// - geometry
-
-	// When I'm testing for ray intersections, I do not want to iterate through every triangle in a polygonal mesh.
-	// I only want to iterate through triangles that are at the oct-tree leaf node.
-
-	meshes[1] = mesh.Mesh{
-		Geometry: samplemodels.LoadBunny(),
-		Material: material.Lambertian{
-			Albedo: vec3.Vec3{X: .8, Y: .1, Z: .2},
-		},
-	}
+	octTree := accel.BuildOctTree(meshes)
+	fmt.Println(octTree)
 
 	frameBuffer := make([]ppm.Pixel, imageWidth*imageHeight)
 

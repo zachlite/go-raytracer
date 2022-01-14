@@ -18,10 +18,8 @@ func (polygon Polygon) Hit(r *ray.Ray, minDistance float64, maxDistance float64)
 	return HitRecord{Hit: false}
 }
 
-// https://stackoverflow.com/questions/63264153/go-interface-method-returning-a-pointer-to-itself
-// I think I need to use pointer receivers
 func (polygon Polygon) AABBIntersections(aabb AABB) []Geometry {
-	intersections := make([]Triangle, 0)
+	intersections := make([]Geometry, 0)
 	for _, triangle := range polygon.Triangles {
 		if triangle.IntersectsAABB(aabb) {
 			intersections = append(intersections, triangle)

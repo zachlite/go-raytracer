@@ -80,10 +80,10 @@ func pointInAABB(point vec3.Vec3, aabb AABB) bool {
 		point.Z >= aabb.Min.Z && point.Z <= aabb.Max.Z
 }
 
-func (triangle Triangle) AABBIntersections(aabb AABB) []*Triangle {
+func (triangle Triangle) AABBIntersections(aabb AABB) []Geometry {
 	if triangle.IntersectsAABB(aabb) {
-		intersections := make([]*Triangle, 1)
-		intersections[0] = &triangle
+		intersections := make([]Geometry, 1)
+		intersections[0] = triangle
 		return intersections
 	}
 

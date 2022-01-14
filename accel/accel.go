@@ -12,14 +12,15 @@ import (
 const MaxDepth = 5
 
 type IntersectCandidate struct {
-	geometry *geometry.Geometry
-	material *material.Material
+	geometry geometry.Geometry
+	material material.Material
 }
 
 type OctTreeNode struct {
 	aabb                geometry.AABB
 	children            []OctTreeNode
 	intersectCandidates []IntersectCandidate
+	depth               int
 }
 
 type OctTree struct {
@@ -71,7 +72,7 @@ func geometryInAABB(meshes []mesh.Mesh, aabb geometry.AABB) []IntersectCandidate
 		for _, geometry := range intersected {
 			candidates = append(candidates, IntersectCandidate{
 				geometry: geometry,
-				material: &mesh.Material,
+				material: mesh.Material,
 			})
 		}
 
@@ -134,14 +135,15 @@ func buildOctTreeNode(meshes []mesh.Mesh, aabb geometry.AABB, depth int) OctTree
 		aabb:                aabb,
 		children:            nil,
 		intersectCandidates: nil,
+		depth:               depth,
 	}
 
 	if geo := geometryInAABB(meshes, aabb); len(geo) > 0 {
 		if depth < MaxDepth {
-			children := make([]OctTreeNode, 8)
+			node.children = make([]OctTreeNode, 8)
 			childAABBs := SplitAABB(aabb)
 			for i, childAABB := range childAABBs {
-				children[i] = buildOctTreeNode(meshes, childAABB, depth+1)
+				node.children[i] = buildOctTreeNode(meshes, childAABB, depth+1)
 			}
 		} else {
 			node.intersectCandidates = geo
