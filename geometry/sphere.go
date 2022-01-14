@@ -48,3 +48,19 @@ func (s Sphere) Hit(r *ray.Ray, minDistance float64, maxDistance float64) HitRec
 
 	return HitRecord{Hit: true, Distance: distance, Point: point, Normal: normal}
 }
+
+func (s Sphere) AABBIntersections(aabb AABB) []*Sphere {
+	intersections := make([]*Sphere, 0)
+
+	if s.IntersectsAABB(aabb) {
+		intersections = append(intersections, &s)
+	}
+
+	return intersections
+}
+
+func (s Sphere) IntersectsAABB(aabb AABB) bool {
+
+	return false
+
+}

@@ -73,3 +73,25 @@ func (triangle Triangle) Hit(ray *ray.Ray, minDistance float64, maxDistance floa
 
 	return HitRecord{Hit: false}
 }
+
+func pointInAABB(point vec3.Vec3, aabb AABB) bool {
+	return point.X >= aabb.Min.X && point.X <= aabb.Max.X &&
+		point.Y >= aabb.Min.Y && point.Y <= aabb.Max.Y &&
+		point.Z >= aabb.Min.Z && point.Z <= aabb.Max.Z
+}
+
+func (triangle Triangle) AABBIntersections(aabb AABB) []*Triangle {
+	if triangle.IntersectsAABB(aabb) {
+		intersections := make([]*Triangle, 1)
+		intersections[0] = &triangle
+		return intersections
+	}
+
+	return nil
+}
+
+func (triangle Triangle) IntersectsAABB(aabb AABB) bool {
+	return pointInAABB(triangle.P1, aabb) &&
+		pointInAABB(triangle.P2, aabb) &&
+		pointInAABB(triangle.P3, aabb)
+}

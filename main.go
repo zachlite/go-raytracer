@@ -7,6 +7,7 @@ import (
 	"goraytracer/geometry"
 	"goraytracer/material"
 	"goraytracer/mathutils"
+	"goraytracer/mesh"
 	"goraytracer/ppm"
 	"goraytracer/ray"
 	samplemodels "goraytracer/sample_models"
@@ -20,12 +21,7 @@ import (
 	"time"
 )
 
-type Mesh struct {
-	Geometry geometry.Geometry
-	Material material.Material
-}
-
-func findClosestMeshHit(meshes []Mesh, ray *ray.Ray) (geometry.HitRecord, material.Material) {
+func findClosestMeshHit(meshes []mesh.Mesh, ray *ray.Ray) (geometry.HitRecord, material.Material) {
 	minDistance := .001
 	maxDistance := math.Inf(1)
 
@@ -45,7 +41,7 @@ func findClosestMeshHit(meshes []Mesh, ray *ray.Ray) (geometry.HitRecord, materi
 	return closetHit, material
 }
 
-func rayColor(meshes []Mesh, ray *ray.Ray, depth int, random *rand.Rand) vec3.Vec3 {
+func rayColor(meshes []mesh.Mesh, ray *ray.Ray, depth int, random *rand.Rand) vec3.Vec3 {
 	if depth <= 0 {
 		return vec3.Vec3{}
 	}
@@ -67,7 +63,7 @@ func rayColor(meshes []Mesh, ray *ray.Ray, depth int, random *rand.Rand) vec3.Ve
 	)
 }
 
-func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Camera, meshes []Mesh) vec3.Vec3 {
+func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Camera, meshes []mesh.Mesh) vec3.Vec3 {
 	r := rand.New(rand.NewSource(time.Now().UnixMicro()))
 	const samplesPerPixel = 100
 	const maxDepth = 10
@@ -107,12 +103,8 @@ func main() {
 	const imageWidth = 320
 	const imageHeight = int(float64(imageWidth) / aspectRatio)
 
-	const x = 3290823
-
-	fmt.Println(x)
-
 	// define our scene
-	meshes := make([]Mesh, 2)
+	meshes := make([]mesh.Mesh, 2)
 
 	// meshes[0] = Mesh{
 	// 	Geometry: geometry.Sphere{
@@ -134,7 +126,7 @@ func main() {
 	// 	},
 	// }
 
-	meshes[0] = Mesh{
+	meshes[0] = mesh.Mesh{
 		Geometry: geometry.Sphere{
 			Center: vec3.Vec3{X: 0, Y: -100.5, Z: 0},
 			Radius: 100,
@@ -163,7 +155,7 @@ func main() {
 	// When I'm testing for ray intersections, I do not want to iterate through every triangle in a polygonal mesh.
 	// I only want to iterate through triangles that are at the oct-tree leaf node.
 
-	meshes[1] = Mesh{
+	meshes[1] = mesh.Mesh{
 		Geometry: samplemodels.LoadBunny(),
 		Material: material.Lambertian{
 			Albedo: vec3.Vec3{X: .8, Y: .1, Z: .2},
