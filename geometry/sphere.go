@@ -7,6 +7,7 @@ import (
 )
 
 type Sphere struct {
+	Id     uint32
 	Center vec3.Vec3
 	Radius float64
 }
@@ -67,8 +68,30 @@ func (s Sphere) AABBIntersections(aabb AABB) []Geometry {
 }
 
 func (s Sphere) IntersectsAABB(aabb AABB) bool {
-	x := math.Max(aabb.Min.X, math.Min(s.Center.X, aabb.Max.X))
-	y := math.Max(aabb.Min.Y, math.Min(s.Center.Y, aabb.Max.Y))
-	z := math.Max(aabb.Min.Z, math.Min(s.Center.Z, aabb.Max.Z))
-	return pointInSphere(s, vec3.Vec3{X: x, Y: y, Z: z})
+	rr := s.Radius * s.Radius
+	dmin := 0.0
+
+	if s.Center.X < aabb.Min.X {
+		dmin += math.Sqrt(s.Center.X - aabb.Min.X)
+	} else if s.Center.X > aabb.Max.X {
+		dmin += math.Sqrt(s.Center.X - aabb.Max.X)
+	}
+
+	if s.Center.Y < aabb.Min.Y {
+		dmin += math.Sqrt(s.Center.Y - aabb.Min.Y)
+	} else if s.Center.Y > aabb.Max.Y {
+		dmin += math.Sqrt(s.Center.Y - aabb.Max.Y)
+	}
+
+	if s.Center.Z < aabb.Min.Z {
+		dmin += math.Sqrt(s.Center.Z - aabb.Min.Z)
+	} else if s.Center.Z > aabb.Max.Z {
+		dmin += math.Sqrt(s.Center.Z - aabb.Max.Z)
+	}
+
+	return dmin <= rr
+}
+
+func (s Sphere) GetId() uint32 {
+	return s.Id
 }

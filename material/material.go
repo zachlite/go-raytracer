@@ -27,7 +27,7 @@ func (material Lambertian) Scatter(r ray.Ray, hitPoint vec3.Vec3, hitNormal vec3
 	if scatterDir.NearZero() {
 		scatterDir = hitNormal
 	}
-	scatterRay := ray.Ray{Origin: hitPoint, Direction: scatterDir}
+	scatterRay := ray.New(hitPoint, scatterDir)
 	return material.Albedo, scatterRay
 }
 

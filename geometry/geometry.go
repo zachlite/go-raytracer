@@ -20,6 +20,8 @@ type Geometry interface {
 	AABBIntersections(aabb AABB) []Geometry
 
 	IntersectsAABB(aabb AABB) bool
+
+	GetId() uint32
 }
 
 // intersections:

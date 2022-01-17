@@ -9,46 +9,55 @@ import (
 )
 
 // TODO: rename this file to octtree.go
-const MaxDepth = 5
+const MaxDepth = 6
 
 type IntersectCandidate struct {
-	geometry geometry.Geometry
-	material material.Material
+	Geometry geometry.Geometry
+	Material material.Material
 }
 
 type OctTreeNode struct {
-	aabb                geometry.AABB
-	children            []OctTreeNode
-	intersectCandidates []IntersectCandidate
-	depth               int
+	Aabb                geometry.AABB
+	Children            []OctTreeNode
+	IntersectCandidates []IntersectCandidate
+	Depth               int
 }
 
 type OctTree struct {
-	rootNode OctTreeNode
+	RootNode OctTreeNode
 }
 
-func (node *OctTreeNode) search(ray *ray.Ray) []IntersectCandidate {
-	if node.aabb.IntersectsRay(ray) == false {
+func (node *OctTreeNode) Search(ray *ray.Ray) []IntersectCandidate {
+
+	if !node.Aabb.IntersectsRay(ray) {
 		return nil
 	}
 
-	if node.children == nil && node.intersectCandidates != nil {
-		return node.intersectCandidates
+	// here, we know the ray intersects the node.
+	if node.Depth == MaxDepth {
+		return node.IntersectCandidates
 	}
 
 	// recursively test all children
-	for _, child := range node.children {
-		childQuery := child.search(ray)
-		if childQuery != nil {
-			return childQuery
+	// collect all unique geometry found
+
+	candidates := make([]IntersectCandidate, 0)
+	unique := make(map[uint32]int)
+
+	for _, child := range node.Children {
+		for _, candidate := range child.Search(ray) {
+			if _, alreadyCandidate := unique[candidate.Geometry.GetId()]; !alreadyCandidate {
+				candidates = append(candidates, candidate)
+				unique[candidate.Geometry.GetId()] = 1
+			}
 		}
 	}
 
-	return nil
+	return candidates
 }
 
 func (tree *OctTree) Search(ray *ray.Ray) []IntersectCandidate {
-	return tree.rootNode.search(ray)
+	return tree.RootNode.Search(ray)
 }
 
 func (tree *OctTree) Print() {
@@ -71,8 +80,8 @@ func geometryInAABB(meshes []mesh.Mesh, aabb geometry.AABB) []IntersectCandidate
 
 		for _, geometry := range intersected {
 			candidates = append(candidates, IntersectCandidate{
-				geometry: geometry,
-				material: mesh.Material,
+				Geometry: geometry,
+				Material: mesh.Material,
 			})
 		}
 
@@ -132,21 +141,23 @@ func SplitAABB(parent geometry.AABB) []geometry.AABB {
 
 func buildOctTreeNode(meshes []mesh.Mesh, aabb geometry.AABB, depth int) OctTreeNode {
 	node := OctTreeNode{
-		aabb:                aabb,
-		children:            nil,
-		intersectCandidates: nil,
-		depth:               depth,
+		Aabb:                aabb,
+		Children:            nil,
+		IntersectCandidates: nil,
+		Depth:               depth,
 	}
 
-	if geo := geometryInAABB(meshes, aabb); len(geo) > 0 {
+	geo := geometryInAABB(meshes, aabb)
+
+	if len(geo) > 0 {
 		if depth < MaxDepth {
-			node.children = make([]OctTreeNode, 8)
+			node.Children = make([]OctTreeNode, 8)
 			childAABBs := SplitAABB(aabb)
 			for i, childAABB := range childAABBs {
-				node.children[i] = buildOctTreeNode(meshes, childAABB, depth+1)
+				node.Children[i] = buildOctTreeNode(meshes, childAABB, depth+1)
 			}
 		} else {
-			node.intersectCandidates = geo
+			node.IntersectCandidates = geo
 		}
 	}
 

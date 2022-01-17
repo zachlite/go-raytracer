@@ -5527,23 +5527,18 @@ var cells = [][]uint{
 
 func LoadBunny() geometry.Polygon {
 	fmt.Println("Total triangles in bunny: ", len(cells))
-	allowed := 4000
 
 	triangles := make([]geometry.Triangle, len(cells))
 
 	count := 0
 
 	for i, cell := range cells {
-		p1 := vec3.Vec3{X: vertices[cell[0]][0], Y: vertices[cell[0]][1], Z: vertices[cell[0]][2] + 10}
-		p2 := vec3.Vec3{X: vertices[cell[1]][0], Y: vertices[cell[1]][1], Z: vertices[cell[1]][2] + 10}
-		p3 := vec3.Vec3{X: vertices[cell[2]][0], Y: vertices[cell[2]][1], Z: vertices[cell[2]][2] + 10}
+		p1 := vec3.Vec3{X: vertices[cell[0]][0] / 10.0, Y: vertices[cell[0]][1] / 10.0, Z: vertices[cell[0]][2] / 10.0}
+		p2 := vec3.Vec3{X: vertices[cell[1]][0] / 10.0, Y: vertices[cell[1]][1] / 10.0, Z: vertices[cell[1]][2] / 10.0}
+		p3 := vec3.Vec3{X: vertices[cell[2]][0] / 10.0, Y: vertices[cell[2]][1] / 10.0, Z: vertices[cell[2]][2] / 10.0}
 		triangles[i] = geometry.NewTriangle(p1, p2, p3)
-
+		triangles[i].Id = uint32(i)
 		count++
-
-		if count == allowed {
-			break
-		}
 	}
 
 	return geometry.Polygon{Triangles: triangles}

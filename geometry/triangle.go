@@ -6,6 +6,7 @@ import (
 )
 
 type Triangle struct {
+	Id     uint32
 	P1     vec3.Vec3
 	P2     vec3.Vec3
 	P3     vec3.Vec3
@@ -91,7 +92,11 @@ func (triangle Triangle) AABBIntersections(aabb AABB) []Geometry {
 }
 
 func (triangle Triangle) IntersectsAABB(aabb AABB) bool {
-	return pointInAABB(triangle.P1, aabb) &&
-		pointInAABB(triangle.P2, aabb) &&
+	return pointInAABB(triangle.P1, aabb) ||
+		pointInAABB(triangle.P2, aabb) ||
 		pointInAABB(triangle.P3, aabb)
+}
+
+func (triangle Triangle) GetId() uint32 {
+	return triangle.Id
 }

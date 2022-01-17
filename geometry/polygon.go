@@ -3,6 +3,7 @@ package geometry
 import "goraytracer/ray"
 
 type Polygon struct {
+	Id        uint32
 	Triangles []Triangle
 }
 
@@ -36,4 +37,8 @@ func (polygon Polygon) IntersectsAABB(aabb AABB) bool {
 		}
 	}
 	return false
+}
+
+func (polygon Polygon) GetId() uint32 {
+	return polygon.Id
 }

@@ -27,11 +27,10 @@ func (camera *Camera) Init(aspectRatio float64) {
 }
 
 func (camera *Camera) GetRay(u float64, v float64) ray.Ray {
-	return ray.Ray{
-		Origin: camera.origin,
-		Direction: vec3.Add(
-			camera.lowerLeftCorner,
-			vec3.Add(vec3.MultiplyScalar(camera.right, u), vec3.MultiplyScalar(camera.up, v)),
-		).Normalized(),
-	}
+	direction := vec3.Add(
+		camera.lowerLeftCorner,
+		vec3.Add(
+			vec3.MultiplyScalar(camera.right, u),
+			vec3.MultiplyScalar(camera.up, v))).Normalized()
+	return ray.New(camera.origin, direction)
 }

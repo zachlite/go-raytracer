@@ -9,3 +9,5 @@
 /dist/
 /out/
 go_build_goraytracer
+goraytracer
+accel/tree.json
