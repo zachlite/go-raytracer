@@ -92,6 +92,7 @@ func (triangle Triangle) AABBIntersections(aabb AABB) []Geometry {
 }
 
 func (triangle Triangle) IntersectsAABB(aabb AABB) bool {
+	// TODO: this is wrong.
 	return pointInAABB(triangle.P1, aabb) ||
 		pointInAABB(triangle.P2, aabb) ||
 		pointInAABB(triangle.P3, aabb)

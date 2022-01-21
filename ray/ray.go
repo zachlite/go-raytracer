@@ -11,7 +11,7 @@ type Ray struct {
 	InverseDir vec3.Vec3
 }
 
-func New(origin vec3.Vec3, direction vec3.Vec3) Ray {
+func New(origin vec3.Vec3, direction vec3.Vec3) *Ray {
 
 	inverseDir := vec3.Vec3{}
 
@@ -33,7 +33,7 @@ func New(origin vec3.Vec3, direction vec3.Vec3) Ray {
 		inverseDir.Z = math.Inf(1)
 	}
 
-	return Ray{Origin: origin, Direction: direction, InverseDir: inverseDir}
+	return &Ray{Origin: origin, Direction: direction, InverseDir: inverseDir}
 }
 
 func (r *Ray) At(t float64) vec3.Vec3 {

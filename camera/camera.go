@@ -26,7 +26,7 @@ func (camera *Camera) Init(aspectRatio float64) {
 		vec3.Sub(vec3.MultiplyScalar(camera.up, 0.5), vec3.Vec3{X: 0, Y: 0, Z: focalLength}))
 }
 
-func (camera *Camera) GetRay(u float64, v float64) ray.Ray {
+func (camera *Camera) GetRay(u float64, v float64) *ray.Ray {
 	direction := vec3.Add(
 		camera.lowerLeftCorner,
 		vec3.Add(

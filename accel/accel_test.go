@@ -1,16 +1,12 @@
 package accel_test
 
 import (
-	"encoding/json"
 	"goraytracer/accel"
 	"goraytracer/geometry"
 	"goraytracer/material"
 	"goraytracer/mesh"
 	"goraytracer/ray"
-	samplemodels "goraytracer/sample_models"
 	"goraytracer/vec3"
-	"log"
-	"os"
 	"testing"
 )
 
@@ -53,68 +49,49 @@ func TestNonIntersectedNodesReturnZeroCandidates(t *testing.T) {
 		IntersectCandidates: candidates,
 		Depth:               1,
 	}
-	assertEqual(t, len(nodeWithChildren.Search(&cameraRay)), 0, "A non-intersected node without children returns nil")
-	assertEqual(t, len(nodeWithoutChildren.Search(&cameraRay)), 0, "A non-intersected node without children returns nil")
+
+	assertEqual(t, len(nodeWithChildren.Search(cameraRay)), 0, "A non-intersected node without children returns nil")
+	assertEqual(t, len(nodeWithoutChildren.Search(cameraRay)), 0, "A non-intersected node without children returns nil")
 }
 
-// TODO
-func TestIntersectedNodeReturnsCandidates(t *testing.T) {
+func countAllCandidates(node accel.OctTreeNode) int {
+	sum := 0
 
-	meshes := make([]mesh.Mesh, 1)
-	meshes[0] = mesh.Mesh{
-		Geometry: samplemodels.LoadBunny(),
-		Material: material.Lambertian{
-			Albedo: vec3.Vec3{
-				X: 0,
-				Y: 1,
-				Z: 0,
-			},
+	if node.Depth == accel.MaxDepth {
+		sum += len(node.IntersectCandidates)
+	} else {
+		for _, child := range node.Children {
+			sum += countAllCandidates(child)
+		}
+	}
+
+	return sum
+}
+
+func TestIntersectedNodeReturnsUniqueCandidates(t *testing.T) {
+	candidateX := geometry.Sphere{
+		Id:     0,
+		Center: vec3.Vec3{X: .2, Y: .5, Z: .3},
+		Radius: .1,
+	}
+
+	meshes := []mesh.Mesh{
+		{
+			Geometry: candidateX,
+			Material: material.Lambertian{Albedo: vec3.Vec3{}},
 		},
 	}
 
-	f, err := os.Create("tree.json")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer f.Close()
-
 	tree := accel.BuildOctTree(meshes)
 
-	_ = json.NewEncoder(f).Encode(
-		tree,
-	)
+	cameraRay := ray.New(
+		vec3.Vec3{X: .2, Z: .3},
+		vec3.Vec3{X: 0, Y: 1, Z: 0}.Normalized())
 
-}
+	candidates := tree.Search(cameraRay)
 
-// TODO
-func TestNoDuplicateGeometriesAreReturned(t *testing.T) {
-
-}
-
-func TestOctTreeSearch(t *testing.T) {
-	// what makes this correct?
-	// no duplicate geometries are returned - even if the same geometry exists in multiple intersected leaf nodes.
-	// an intersected octree node with no children return nil
-	// a non-intersected node returns nil, with our without children
-	// an intersected node with attached geometry returns that geometry.
-
-	//	meshes := make([]mesh.Mesh, 1)
-	//	meshes[0] = mesh.Mesh{
-	//		Geometry: geometry.Sphere{
-	//			Center: vec3.Vec3{0, 0, 0},
-	//			Radius: .1,
-	//		},
-	//		Material: material.Lambertian{Albedo: vec3.Vec3{
-	//			X: .5,
-	//			Y: .5,
-	//			Z: .5,
-	//		}},
-	//	}
-	//
-	//	//tree := accel.BuildOctTree(meshes)
-	//
+	assertEqual(t, len(candidates), 1, "Intersected nodes return unique candidates")
+	assertEqual(t, countAllCandidates(tree.RootNode), 56, "Multiple nodes have the same candidate")
 }
 
 func TestSplitAABB(t *testing.T) {

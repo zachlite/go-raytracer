@@ -68,28 +68,39 @@ func (s Sphere) AABBIntersections(aabb AABB) []Geometry {
 }
 
 func (s Sphere) IntersectsAABB(aabb AABB) bool {
-	rr := s.Radius * s.Radius
-	dmin := 0.0
 
-	if s.Center.X < aabb.Min.X {
-		dmin += math.Sqrt(s.Center.X - aabb.Min.X)
-	} else if s.Center.X > aabb.Max.X {
-		dmin += math.Sqrt(s.Center.X - aabb.Max.X)
-	}
+	x := math.Max(aabb.Min.X, math.Min(s.Center.X, aabb.Max.X))
+	y := math.Max(aabb.Min.Y, math.Min(s.Center.Y, aabb.Max.Y))
+	z := math.Max(aabb.Min.Z, math.Min(s.Center.Z, aabb.Max.Z))
 
-	if s.Center.Y < aabb.Min.Y {
-		dmin += math.Sqrt(s.Center.Y - aabb.Min.Y)
-	} else if s.Center.Y > aabb.Max.Y {
-		dmin += math.Sqrt(s.Center.Y - aabb.Max.Y)
-	}
+	distanceSquared := ((x - s.Center.X) * (x - s.Center.X)) +
+		((y - s.Center.Y) * (y - s.Center.Y)) +
+		((z - s.Center.Z) * (z - s.Center.Z))
 
-	if s.Center.Z < aabb.Min.Z {
-		dmin += math.Sqrt(s.Center.Z - aabb.Min.Z)
-	} else if s.Center.Z > aabb.Max.Z {
-		dmin += math.Sqrt(s.Center.Z - aabb.Max.Z)
-	}
+	return distanceSquared <= s.Radius*s.Radius
 
-	return dmin <= rr
+	//rr := s.Radius * s.Radius
+	//dmin := 0.0
+	//
+	//if s.Center.X < aabb.Min.X {
+	//	dmin += math.Sqrt(s.Center.X - aabb.Min.X)
+	//} else if s.Center.X > aabb.Max.X {
+	//	dmin += math.Sqrt(s.Center.X - aabb.Max.X)
+	//}
+	//
+	//if s.Center.Y < aabb.Min.Y {
+	//	dmin += math.Sqrt(s.Center.Y - aabb.Min.Y)
+	//} else if s.Center.Y > aabb.Max.Y {
+	//	dmin += math.Sqrt(s.Center.Y - aabb.Max.Y)
+	//}
+	//
+	//if s.Center.Z < aabb.Min.Z {
+	//	dmin += math.Sqrt(s.Center.Z - aabb.Min.Z)
+	//} else if s.Center.Z > aabb.Max.Z {
+	//	dmin += math.Sqrt(s.Center.Z - aabb.Max.Z)
+	//}
+	//
+	//return dmin <= rr
 }
 
 func (s Sphere) GetId() uint32 {

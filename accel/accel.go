@@ -1,15 +1,18 @@
 package accel
 
 import (
+	"encoding/json"
 	"goraytracer/geometry"
 	"goraytracer/material"
 	"goraytracer/mesh"
 	"goraytracer/ray"
 	"goraytracer/vec3"
+	"log"
+	"os"
 )
 
 // TODO: rename this file to octtree.go
-const MaxDepth = 6
+const MaxDepth = 5
 
 type IntersectCandidate struct {
 	Geometry geometry.Geometry
@@ -60,8 +63,18 @@ func (tree *OctTree) Search(ray *ray.Ray) []IntersectCandidate {
 	return tree.RootNode.Search(ray)
 }
 
-func (tree *OctTree) Print() {
-	// look at cockroach sql explain formatting for inspiration here
+func (tree *OctTree) WriteToFile(filename string) {
+	f, err := os.Create(filename)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	_ = json.NewEncoder(f).Encode(
+		tree,
+	)
 }
 
 func geometryInAABB(meshes []mesh.Mesh, aabb geometry.AABB) []IntersectCandidate {

@@ -52,7 +52,7 @@ func rayColor(tree *accel.OctTree, ray *ray.Ray, depth int, random *rand.Rand) v
 	// scatter and recurse if there's a hit record
 	if hitRecord.Hit {
 		attenuation, scatteredRay := material.Scatter(*ray, hitRecord.Point, hitRecord.Normal, random)
-		return vec3.Multiply(attenuation, rayColor(tree, &scatteredRay, depth-1, random))
+		return vec3.Multiply(attenuation, rayColor(tree, scatteredRay, depth-1, random))
 	}
 
 	// if there's no sphere hit, render the sky
@@ -74,7 +74,7 @@ func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Ca
 		u := (float64(i) + r.Float64()) / (float64(imageWidth) - 1)
 		v := (float64(j) + r.Float64()) / (float64(imageHeight) - 1)
 		ray := camera.GetRay(u, v)
-		pixelColor = vec3.Add(pixelColor, rayColor(tree, &ray, maxDepth, r))
+		pixelColor = vec3.Add(pixelColor, rayColor(tree, ray, maxDepth, r))
 	}
 
 	// average and gamma correct
@@ -105,46 +105,36 @@ func main() {
 	const imageHeight = int(float64(imageWidth) / aspectRatio)
 
 	// define our scene
-	meshes := make([]mesh.Mesh, 3)
-	//meshes[0] = mesh.Mesh{
-	//	Geometry: samplemodels.LoadBunny(),
-	//	Material: material.Lambertian{
-	//		Albedo: vec3.Vec3{
-	//			X: 0,
-	//			Y: 1,
-	//			Z: 0,
-	//		},
-	//	},
-	//}
-
-	meshes[0] = mesh.Mesh{
-		Geometry: geometry.Sphere{
-			Id:     2,
-			Center: vec3.Vec3{X: 0, Y: -1, Z: 1},
-			Radius: .5,
+	meshes := []mesh.Mesh{
+		{
+			Geometry: geometry.Sphere{
+				Id:     2,
+				Center: vec3.Vec3{X: 0, Y: -1, Z: 1},
+				Radius: .5,
+			},
+			Material: material.Lambertian{
+				Albedo: vec3.Vec3{X: 0.7, Y: .7, Z: .7},
+			},
 		},
-		Material: material.Lambertian{
-			Albedo: vec3.Vec3{X: 0.7, Y: .7, Z: .7},
+		{
+			Geometry: geometry.Sphere{
+				Id:     0,
+				Center: vec3.Vec3{0, 0, 1},
+				Radius: .5,
+			},
+			Material: material.Lambertian{
+				Albedo: vec3.Vec3{X: 0.7, Y: .7, Z: .7},
+			},
 		},
-	}
-	meshes[1] = mesh.Mesh{
-		Geometry: geometry.Sphere{
-			Id:     0,
-			Center: vec3.Vec3{0, 0, 1},
-			Radius: .5,
-		},
-		Material: material.Lambertian{
-			Albedo: vec3.Vec3{X: 0.7, Y: .7, Z: .7},
-		},
-	}
-	meshes[2] = mesh.Mesh{
-		Geometry: geometry.Sphere{
-			Id:     1,
-			Center: vec3.Vec3{1, 0, 1},
-			Radius: .5,
-		},
-		Material: material.Lambertian{
-			Albedo: vec3.Vec3{X: 1.0, Y: .7, Z: .7},
+		{
+			Geometry: geometry.Sphere{
+				Id:     1,
+				Center: vec3.Vec3{1, 0, 1},
+				Radius: .5,
+			},
+			Material: material.Lambertian{
+				Albedo: vec3.Vec3{X: 1.0, Y: .7, Z: .7},
+			},
 		},
 	}
 
