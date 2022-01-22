@@ -109,7 +109,7 @@ func main() {
 		{
 			Geometry: geometry.Sphere{
 				Id:     2,
-				Center: vec3.Vec3{X: 0, Y: -1, Z: 1},
+				Center: vec3.Vec3{X: 0, Y: 0, Z: 0},
 				Radius: .5,
 			},
 			Material: material.Lambertian{
@@ -119,7 +119,7 @@ func main() {
 		{
 			Geometry: geometry.Sphere{
 				Id:     0,
-				Center: vec3.Vec3{0, 0, 1},
+				Center: vec3.Vec3{0, 0, -1},
 				Radius: .5,
 			},
 			Material: material.Lambertian{
@@ -129,7 +129,7 @@ func main() {
 		{
 			Geometry: geometry.Sphere{
 				Id:     1,
-				Center: vec3.Vec3{1, 0, 1},
+				Center: vec3.Vec3{-1, 0, 0},
 				Radius: .5,
 			},
 			Material: material.Lambertian{
@@ -145,11 +145,9 @@ func main() {
 
 	frameBuffer := make([]ppm.Pixel, imageWidth*imageHeight)
 
-	var camera camera.Camera
-	camera.Init(aspectRatio)
-	camera.GetRay(1.0, 1.0)
-	split := 8
+	cam := camera.New(vec3.Vec3{X: 1, Y: 1, Z: 1}, vec3.Vec3{}, 90, aspectRatio)
 
+	split := 8
 	wg := sync.WaitGroup{}
 
 	for xRegion := 0; xRegion < split; xRegion++ {
@@ -171,7 +169,7 @@ func main() {
 				for i := iMin; i <= iMax; i++ {
 					for j := jMin; j <= jMax; j++ {
 
-						color := samplePixel(i, j, imageWidth, imageHeight, camera, &tree)
+						color := samplePixel(i, j, imageWidth, imageHeight, cam, &tree)
 
 						index := (imageHeight-1-j)*imageWidth + i
 
