@@ -51,7 +51,7 @@ func rayColor(tree *accel.OctTree, ray *ray.Ray, depth int, random *rand.Rand) v
 
 	// scatter and recurse if there's a hit record
 	if hitRecord.Hit {
-		attenuation, scatteredRay := material.Scatter(*ray, hitRecord.Point, hitRecord.Normal, random)
+		attenuation, scatteredRay := material.Scatter(*ray, hitRecord, random)
 		return vec3.Multiply(attenuation, rayColor(tree, scatteredRay, depth-1, random))
 	}
 
@@ -145,7 +145,7 @@ func main() {
 
 	frameBuffer := make([]ppm.Pixel, imageWidth*imageHeight)
 
-	cam := camera.New(vec3.Vec3{X: 1, Y: 1, Z: 1}, vec3.Vec3{}, 90, aspectRatio)
+	cam := camera.New(vec3.Vec3{X: 0, Y: 2, Z: 0.01}, vec3.Vec3{}, 90, aspectRatio)
 
 	split := 8
 	wg := sync.WaitGroup{}

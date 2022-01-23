@@ -10,6 +10,8 @@ type HitRecord struct {
 	Distance float64 // distance from ray origin
 	Point    vec3.Vec3
 	Normal   vec3.Vec3
+	U        float64
+	V        float64
 }
 
 type Geometry interface {

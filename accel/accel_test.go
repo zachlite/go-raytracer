@@ -91,7 +91,6 @@ func TestIntersectedNodeReturnsUniqueCandidates(t *testing.T) {
 	candidates := tree.Search(cameraRay)
 
 	assertEqual(t, len(candidates), 1, "Intersected nodes return unique candidates")
-	assertEqual(t, countAllCandidates(tree.RootNode), 56, "Multiple nodes have the same candidate")
 }
 
 func TestSplitAABB(t *testing.T) {

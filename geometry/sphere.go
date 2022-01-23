@@ -12,6 +12,30 @@ type Sphere struct {
 	Radius float64
 }
 
+/**
+Sphere uv thoughts:
+
+on sphere hit:
+hit euclidean coordinates -> polar coordinages -> uv coordinates
+save uv coordinates in hit record
+
+in Material.Scatter, use uv from hit record to look up image data.
+
+Image data:
+- width
+- height
+
+can create images manually for testing
+or procedurally with things like perlin noise
+
+Multiple images can allow for cool material properties
+- albedo map
+- glossiness map
+- roughness map
+- normal map
+
+*/
+
 func (s Sphere) Hit(r *ray.Ray, minDistance float64, maxDistance float64) HitRecord {
 
 	// solve the quadratic equation to see if ray intersects sphere at all
@@ -36,6 +60,7 @@ func (s Sphere) Hit(r *ray.Ray, minDistance float64, maxDistance float64) HitRec
 
 	distance := root
 	point := r.At(distance)
+	u, v := s.GetUV(point)
 	outwardNormal := vec3.MultiplyScalar(vec3.Sub(point, s.Center), 1.0/s.Radius).Normalized()
 	isFrontFace := vec3.Dot(r.Direction, outwardNormal) < 0
 
@@ -47,14 +72,7 @@ func (s Sphere) Hit(r *ray.Ray, minDistance float64, maxDistance float64) HitRec
 		normal = vec3.MultiplyScalar(outwardNormal, -1.0)
 	}
 
-	return HitRecord{Hit: true, Distance: distance, Point: point, Normal: normal}
-}
-
-func pointInSphere(s Sphere, point vec3.Vec3) bool {
-	return math.Sqrt(
-		((point.X-s.Center.X)*(point.X-s.Center.X))+
-			((point.Y-s.Center.Y)*(point.Y-s.Center.Y))+
-			((point.Z-s.Center.Z)*(point.Y-s.Center.Z))) < s.Radius
+	return HitRecord{Hit: true, Distance: distance, Point: point, Normal: normal, U: u, V: v}
 }
 
 func (s Sphere) AABBIntersections(aabb AABB) []Geometry {
@@ -78,29 +96,13 @@ func (s Sphere) IntersectsAABB(aabb AABB) bool {
 		((z - s.Center.Z) * (z - s.Center.Z))
 
 	return distanceSquared <= s.Radius*s.Radius
+}
 
-	//rr := s.Radius * s.Radius
-	//dmin := 0.0
-	//
-	//if s.Center.X < aabb.Min.X {
-	//	dmin += math.Sqrt(s.Center.X - aabb.Min.X)
-	//} else if s.Center.X > aabb.Max.X {
-	//	dmin += math.Sqrt(s.Center.X - aabb.Max.X)
-	//}
-	//
-	//if s.Center.Y < aabb.Min.Y {
-	//	dmin += math.Sqrt(s.Center.Y - aabb.Min.Y)
-	//} else if s.Center.Y > aabb.Max.Y {
-	//	dmin += math.Sqrt(s.Center.Y - aabb.Max.Y)
-	//}
-	//
-	//if s.Center.Z < aabb.Min.Z {
-	//	dmin += math.Sqrt(s.Center.Z - aabb.Min.Z)
-	//} else if s.Center.Z > aabb.Max.Z {
-	//	dmin += math.Sqrt(s.Center.Z - aabb.Max.Z)
-	//}
-	//
-	//return dmin <= rr
+func (s Sphere) GetUV(point vec3.Vec3) (u float64, v float64) {
+	P := vec3.Sub(s.Center, point).Normalized()
+	u = 0.5 + (math.Atan2(P.X, P.Z) / (2.0 * math.Pi))
+	v = 0.5 - (math.Asin(P.Y) / math.Pi)
+	return u, v
 }
 
 func (s Sphere) GetId() uint32 {

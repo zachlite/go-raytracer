@@ -44,6 +44,7 @@ func (node *OctTreeNode) Search(ray *ray.Ray) []IntersectCandidate {
 	// recursively test all children
 	// collect all unique geometry found
 
+	// TODO: don't allocate every recursion
 	candidates := make([]IntersectCandidate, 0)
 	unique := make(map[uint32]int)
 
@@ -179,8 +180,9 @@ func buildOctTreeNode(meshes []mesh.Mesh, aabb geometry.AABB, depth int) OctTree
 
 func BuildOctTree(meshes []mesh.Mesh) OctTree {
 	// assume world extends from {-1,-1,-1} to {1,1,1}
+	size := 10.0
 	return OctTree{buildOctTreeNode(meshes, geometry.AABB{
-		Min: vec3.Vec3{X: -1, Y: -1, Z: -1},
-		Max: vec3.Vec3{X: 1, Y: 1, Z: 1},
+		Min: vec3.Vec3{X: size * -1.0, Y: size * -1.0, Z: size * -1.0},
+		Max: vec3.Vec3{X: size, Y: size, Z: size},
 	}, 0)}
 }
