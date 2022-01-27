@@ -180,7 +180,7 @@ func buildOctTreeNode(meshes []mesh.Mesh, aabb geometry.AABB, depth int) OctTree
 
 func BuildOctTree(meshes []mesh.Mesh) OctTree {
 	// assume world extends from {-1,-1,-1} to {1,1,1}
-	size := 10.0
+	size := 100.0
 	return OctTree{buildOctTreeNode(meshes, geometry.AABB{
 		Min: vec3.Vec3{X: size * -1.0, Y: size * -1.0, Z: size * -1.0},
 		Max: vec3.Vec3{X: size, Y: size, Z: size},

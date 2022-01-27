@@ -51,22 +51,28 @@ func rayColor(tree *accel.OctTree, ray *ray.Ray, depth int, random *rand.Rand) v
 
 	// scatter and recurse if there's a hit record
 	if hitRecord.Hit {
-		attenuation, scatteredRay := material.Scatter(*ray, hitRecord, random)
-		return vec3.Multiply(attenuation, rayColor(tree, scatteredRay, depth-1, random))
+		attenuation, scatteredRay := material.Scatter(hitRecord, random)
+
+		if scatteredRay != nil {
+			return vec3.Multiply(attenuation, rayColor(tree, scatteredRay, depth-1, random))
+		} else {
+			return attenuation
+		}
 	}
 
+	return vec3.Vec3{}
 	// if there's no sphere hit, render the sky
-	unitDirection := ray.Direction.Normalized()
-	t := .5 * (unitDirection.Y + 1.0)
-	return vec3.Add(
-		vec3.MultiplyScalar(vec3.Vec3{X: 1.0, Y: 1.0, Z: 1.0}, 1.0-t),
-		vec3.MultiplyScalar(vec3.Vec3{X: .5, Y: .7, Z: 1.0}, t),
-	)
+	//unitDirection := ray.Direction.Normalized()
+	//t := .5 * (unitDirection.Y + 1.0)
+	//return vec3.Add(
+	//	vec3.MultiplyScalar(vec3.Vec3{X: 1.0, Y: 1.0, Z: 1.0}, 1.0-t),
+	//	vec3.MultiplyScalar(vec3.Vec3{X: .5, Y: .7, Z: 1.0}, t),
+	//)
 }
 
 func samplePixel(i int, j int, imageWidth int, imageHeight int, camera camera.Camera, tree *accel.OctTree) vec3.Vec3 {
 	r := rand.New(rand.NewSource(time.Now().UnixMicro()))
-	const samplesPerPixel = 100
+	const samplesPerPixel = 50
 	const maxDepth = 10
 	pixelColor := vec3.Vec3{}
 
@@ -108,33 +114,27 @@ func main() {
 	meshes := []mesh.Mesh{
 		{
 			Geometry: geometry.Sphere{
-				Id:     2,
-				Center: vec3.Vec3{X: 0, Y: 0, Z: 0},
-				Radius: .5,
-			},
-			Material: material.Lambertian{
-				Albedo: vec3.Vec3{X: 0.7, Y: .7, Z: .7},
-			},
-		},
-		{
-			Geometry: geometry.Sphere{
 				Id:     0,
-				Center: vec3.Vec3{0, 0, -1},
-				Radius: .5,
+				Center: vec3.Vec3{X: -51, Y: 0, Z: 0},
+				Radius: 50,
 			},
-			Material: material.Lambertian{
-				Albedo: vec3.Vec3{X: 0.7, Y: .7, Z: .7},
-			},
+			Material: &material.Lambertian{Properties: material.MaterialProps{
+				Albedo:           vec3.Vec3{1, 0, 0},
+				BaseColorTexture: nil,
+				EmittanceColor:   vec3.Vec3{1, 1, 1},
+			}},
 		},
 		{
 			Geometry: geometry.Sphere{
 				Id:     1,
-				Center: vec3.Vec3{-1, 0, 0},
-				Radius: .5,
+				Center: vec3.Vec3{20, 0, -5},
+				Radius: 2,
 			},
-			Material: material.Lambertian{
-				Albedo: vec3.Vec3{X: 1.0, Y: .7, Z: .7},
-			},
+			Material: &material.Lambertian{Properties: material.MaterialProps{
+				Albedo:           vec3.Vec3{.5, .5, .5},
+				BaseColorTexture: nil,
+				EmittanceColor:   vec3.Vec3{0, 0, 0},
+			}},
 		},
 	}
 
@@ -145,7 +145,7 @@ func main() {
 
 	frameBuffer := make([]ppm.Pixel, imageWidth*imageHeight)
 
-	cam := camera.New(vec3.Vec3{X: 0, Y: 2, Z: 0.01}, vec3.Vec3{}, 90, aspectRatio)
+	cam := camera.New(vec3.Vec3{X: 0, Y: 0, Z: 100}, vec3.Vec3{}, 45, aspectRatio)
 
 	split := 8
 	wg := sync.WaitGroup{}

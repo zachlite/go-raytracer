@@ -41,7 +41,7 @@ func TestNonIntersectedNodesReturnZeroCandidates(t *testing.T) {
 			P3:     vec3.Vec3{},
 			Normal: vec3.Vec3{},
 		},
-		Material: material.Lambertian{Albedo: vec3.Vec3{}},
+		Material: &material.Lambertian{},
 	}
 	nodeWithChildren := accel.OctTreeNode{
 		Aabb:                accel.SplitAABB(aabb)[0],
@@ -78,7 +78,7 @@ func TestIntersectedNodeReturnsUniqueCandidates(t *testing.T) {
 	meshes := []mesh.Mesh{
 		{
 			Geometry: candidateX,
-			Material: material.Lambertian{Albedo: vec3.Vec3{}},
+			Material: &material.Lambertian{},
 		},
 	}
 

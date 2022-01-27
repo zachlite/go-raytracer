@@ -108,3 +108,5 @@ func (s Sphere) GetUV(point vec3.Vec3) (u float64, v float64) {
 func (s Sphere) GetId() uint32 {
 	return s.Id
 }
+
+//https://thebookofshaders.com/13/

@@ -1,6 +1,7 @@
 package vec3
 
 import (
+	"goraytracer/mathutils"
 	"math"
 	"math/rand"
 )
@@ -50,6 +51,14 @@ func Multiply(a Vec3, b Vec3) Vec3 {
 
 func MultiplyScalar(v Vec3, s float64) Vec3 {
 	return Vec3{v.X * s, v.Y * s, v.Z * s}
+}
+
+func Lerp(v0 Vec3, v1 Vec3, t float64) Vec3 {
+	return Vec3{
+		X: mathutils.Lerp(v0.X, v1.X, t),
+		Y: mathutils.Lerp(v0.Y, v1.Y, t),
+		Z: mathutils.Lerp(v0.Z, v1.Z, t),
+	}
 }
 
 func (v Vec3) Normalized() Vec3 {
